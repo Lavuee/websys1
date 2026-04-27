@@ -18,7 +18,6 @@
         input:focus, select:focus, textarea:focus { outline: 2px solid var(--primary-color); }
         .full-width { grid-column: 1 / -1; }
         
-        /* Mobile responsiveness */
         @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
     </style>
 </head>

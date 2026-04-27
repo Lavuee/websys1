@@ -1,0 +1,112 @@
+<?php
+// Secures the page for student access only using the centralized authentication script.
+require_once '../actions/auth.php';
+check_student();
+
+// Establishes the database connection.
+require_once '../config/db.php';
+
+try {
+    $stmt = $pdo->prepare("SELECT total_assessment, balance FROM enrollments WHERE enrollment_id = :id");
+    $stmt->execute([':id' => $_SESSION['enrollment_id']]);
+    $finances = $stmt->fetch();
+
+    $payStmt = $pdo->prepare("SELECT SUM(amount) FROM payments WHERE enrollment_id = :id AND status = 'Verified'");
+    $payStmt->execute([':id' => $_SESSION['enrollment_id']]);
+    $amount_paid = (float) $payStmt->fetchColumn();
+
+} catch (\PDOException $e) {
+    die("Database error: " . $e->getMessage());
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assessment & Payment | Pines NHS</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <style>
+        .layout { display: flex; min-height: 100vh; }
+        .sidebar { width: 260px; border-right: 1px solid var(--glass-border); padding: 20px; display: flex; flex-direction: column; background: var(--glass-bg); backdrop-filter: blur(12px); }
+        .main-content { flex: 1; padding: 40px; }
+        .nav-link { display: block; padding: 12px 15px; margin-bottom: 5px; border-radius: 8px; color: var(--text-main); font-weight: 500; text-decoration: none; }
+        .nav-link:hover, .nav-link.active { background: var(--primary-color); color: white; }
+        .breakdown-row { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid var(--glass-border); font-size: 0.95rem; }
+        .breakdown-row:last-child { border-bottom: none; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 5px; }
+        .form-control { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: transparent; color: var(--text-main); }
+        .form-control:focus { outline: 2px solid var(--primary-color); }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="logo-container" style="margin-bottom: 40px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-primary"><path d="M8 19h8a4 4 0 0 0 3.8-2.8l2-7A4 4 0 0 0 18 5h-1.5c-.8 0-1.5.3-2 1l-2.5 3.5"/></svg>
+                Pines NHS
+            </div>
+            <nav style="flex: 1;">
+                <a href="dashboard.php" class="nav-link">Dashboard</a>
+                <a href="assessment.php" class="nav-link active">Assessment & Payment</a>
+                <a href="records.php" class="nav-link">My Records</a>
+            </nav>
+            <div style="border-top: 1px solid var(--glass-border); padding-top: 20px; margin-top: auto;">
+                <p style="font-size: 0.85rem; margin-bottom: 10px; font-weight: 600;"><?= htmlspecialchars($_SESSION['user_email']) ?></p>
+                <a href="../logout.php" class="text-muted" style="font-size: 0.85rem;">Sign Out</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <h2 style="margin-bottom: 5px;">Assessment & Payments</h2>
+            <p class="text-muted" style="margin-bottom: 30px; font-size: 0.9rem;">View tuition breakdown and submit payments.</p>
+            <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 30px;">
+                <div class="glass-panel" style="padding: 25px;">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 20px;">Tuition Assessment</h3>
+                    <div class="breakdown-row" style="font-weight: 600;">
+                        <span>Total Assessment</span>
+                        <span>₱<?= number_format($finances['total_assessment'], 2) ?></span>
+                    </div>
+                    <div class="breakdown-row text-primary">
+                        <span>Amount Paid</span>
+                        <span>₱<?= number_format($amount_paid, 2) ?></span>
+                    </div>
+                    <div class="breakdown-row" style="font-weight: 700; color: #ea580c; font-size: 1.1rem;">
+                        <span>Remaining Balance</span>
+                        <span>₱<?= number_format($finances['balance'], 2) ?></span>
+                    </div>
+                </div>
+                <?php if($finances['balance'] > 0): ?>
+                <div class="glass-panel" style="padding: 25px;">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 20px;">Submit Payment</h3>
+                    <form action="../actions/submit_payment.php" method="POST">
+                        <div class="form-group">
+                            <label>Amount to Pay (₱)</label>
+                            <input type="number" step="0.01" name="amount" class="form-control" max="<?= $finances['balance'] ?>" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Payment Method</label>
+                            <select name="payment_method" class="form-control" required>
+                                <option value="Cash">Cash (In-person)</option>
+                                <option value="GCash">GCash</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px; padding: 12px;">Submit Payment</button>
+                    </form>
+                </div>
+                <?php else: ?>
+                    <div class="glass-panel" style="padding: 25px; display: flex; align-items: center; justify-content: center; text-align: center;">
+                        <div>
+                            <span style="font-size: 3rem; display: block; margin-bottom: 10px;">🎉</span>
+                            <h3 style="color: var(--primary-color);">Fully Paid</h3>
+                            <p class="text-muted" style="font-size: 0.9rem;">No outstanding balance remains on this account.</p>
+                        </div>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </main>
+    </div>
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 <?php
-
+// Establishes the core database connection parameters.
 $host = '127.0.0.1';
 $db   = 'pines_ems';
 $user = 'root'; 
@@ -16,7 +16,9 @@ $options = [
 
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
-} catch (\PDOException $e) {
-    throw new \PDOException($e->getMessage(), (int)$e->getCode());
+} catch (PDOException $e) {
+    // Suppresses raw database errors from outputting to the browser.
+    error_log("DB connection failed: " . $e->getMessage());
+    die("A database error occurred. Please contact the administrator.");
 }
 ?>

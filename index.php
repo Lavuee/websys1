@@ -42,17 +42,17 @@
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; max-width: 900px; width: 100%;">
             
             <div class="glass-panel" style="padding: 30px 20px;">
-                <h3 style="margin-bottom: 10px; font-size: 1.1rem;">🛡️ Secure Registration</h3>
+                <h3 style="margin-bottom: 10px; font-size: 1.1rem;"> Secure Registration</h3>
                 <p class="text-muted" style="font-size: 0.9rem;">Submit your enrollment application directly through our portal.</p>
             </div>
 
             <div class="glass-panel" style="padding: 30px 20px;">
-                <h3 style="margin-bottom: 10px; font-size: 1.1rem;">💳 Easy Payments</h3>
+                <h3 style="margin-bottom: 10px; font-size: 1.1rem;"> Easy Payments</h3>
                 <p class="text-muted" style="font-size: 0.9rem;">Pay via Cash or GCash with receipt upload and tracking.</p>
             </div>
 
             <div class="glass-panel" style="padding: 30px 20px;">
-                <h3 style="margin-bottom: 10px; font-size: 1.1rem;">📖 View Records</h3>
+                <h3 style="margin-bottom: 10px; font-size: 1.1rem;"> View Records</h3>
                 <p class="text-muted" style="font-size: 0.9rem;">Access your grades and enrollment status anytime.</p>
             </div>
 

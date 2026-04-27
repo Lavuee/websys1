@@ -1,77 +1,81 @@
 <?php
+// Initializes session state for the transaction.
 session_start();
+
+// Establishes the database connection.
 require_once '../config/db.php'; 
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
-    $enrollment_id = 'ENR-' . date('Y') . '-' . strtoupper(substr(uniqid(), -5));
-
+    // Generates a unique tracking identifier for the enrollment application.
+    $tracking_no = 'ENR-' . date('Y') . '-' . strtoupper(substr(uniqid(), -5));
     $student_email = filter_var($_POST['student_email'], FILTER_SANITIZE_EMAIL);
-    $first_name = htmlspecialchars($_POST['first_name']);
-    $middle_name = htmlspecialchars($_POST['middle_name']);
-    $last_name = htmlspecialchars($_POST['last_name']);
-    $suffix = htmlspecialchars($_POST['suffix']);
-    $date_of_birth = $_POST['date_of_birth'] ? $_POST['date_of_birth'] : NULL;
-    $gender = $_POST['gender'] ?: NULL;
-    $contact_number = htmlspecialchars($_POST['contact_number']);
-    $address = htmlspecialchars($_POST['address']);
-    $guardian_name = htmlspecialchars($_POST['guardian_name']);
-    $guardian_contact = htmlspecialchars($_POST['guardian_contact']);
-    $grade_level = $_POST['grade_level'];
-    $strand = $_POST['strand'];
-    $lrn = htmlspecialchars($_POST['lrn']);
-    $previous_school = htmlspecialchars($_POST['previous_school']);
-    $school_year = '2025-2026'; 
-
-    if (empty($first_name) || empty($last_name) || empty($student_email) || empty($grade_level)) {
-        die("Error: Required fields are missing. Please go back and try again.");
-    }
 
     try {
-        $stmt = $pdo->prepare("
-            INSERT INTO Enrollments (
-                enrollment_id, student_email, first_name, middle_name, last_name, 
-                suffix, date_of_birth, gender, contact_number, address, 
-                guardian_name, guardian_contact, grade_level, strand, 
-                school_year, lrn, previous_school, status
-            ) VALUES (
-                :enrollment_id, :student_email, :first_name, :middle_name, :last_name, 
-                :suffix, :date_of_birth, :gender, :contact_number, :address, 
-                :guardian_name, :guardian_contact, :grade_level, :strand, 
-                :school_year, :lrn, :previous_school, 'Pending'
-            )
-        ");
+        // Initiates a database transaction to ensure atomicity across multiple table insertions.
+        $pdo->beginTransaction();
 
-        $stmt->execute([
-            ':enrollment_id' => $enrollment_id,
-            ':student_email' => $student_email,
-            ':first_name' => $first_name,
-            ':middle_name' => $middle_name,
-            ':last_name' => $last_name,
-            ':suffix' => $suffix,
-            ':date_of_birth' => $date_of_birth,
-            ':gender' => $gender,
-            ':contact_number' => $contact_number,
-            ':address' => $address,
-            ':guardian_name' => $guardian_name,
-            ':guardian_contact' => $guardian_contact,
-            ':grade_level' => $grade_level,
-            ':strand' => $strand,
-            ':school_year' => $school_year,
-            ':lrn' => $lrn,
-            ':previous_school' => $previous_school
+        // Provisions a new user account for portal access.
+        $password_hash = password_hash($tracking_no, PASSWORD_DEFAULT);
+        $stmtUser = $pdo->prepare("INSERT INTO users (email, password_hash, role) VALUES (?, ?, 'Student')");
+        $stmtUser->execute([$student_email, $password_hash]);
+        $user_id = $pdo->lastInsertId();
+
+        // Records the permanent demographic profile of the student.
+        $stmtStudent = $pdo->prepare("
+            INSERT INTO students (user_id, lrn, first_name, middle_name, last_name, suffix, date_of_birth, gender, contact_number, address, guardian_name, guardian_contact) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ");
+        $stmtStudent->execute([
+            $user_id, 
+            $_POST['lrn'] ?: null, 
+            $_POST['first_name'], 
+            $_POST['middle_name'] ?: null, 
+            $_POST['last_name'], 
+            $_POST['suffix'] ?: null, 
+            $_POST['date_of_birth'] ?: null, 
+            $_POST['gender'] ?: null, 
+            $_POST['contact_number'] ?: null, 
+            $_POST['address'] ?: null, 
+            $_POST['guardian_name'] ?: null, 
+            $_POST['guardian_contact'] ?: null
+        ]);
+        $student_id = $pdo->lastInsertId();
+
+        // Registers the specific academic enrollment for the active school year.
+        $stmtEnr = $pdo->prepare("
+            INSERT INTO enrollments (tracking_no, student_id, school_year_id, grade_level, strand, status) 
+            VALUES (?, ?, 1, ?, ?, 'Pending')
+        ");
+        $stmtEnr->execute([
+            $tracking_no, 
+            $student_id, 
+            $_POST['grade_level'], 
+            $_POST['strand']
         ]);
 
+        // Commits the transaction to finalize data storage.
+        $pdo->commit();
+
+        // Redirects to the landing page with authentication instructions.
         echo "<script>
-                alert('Application submitted successfully! Your tracking ID is: " . $enrollment_id . "');
+                alert('Application submitted successfully. Please record the Student ID: " . $tracking_no . "\\n\\nThis ID functions as both the Username and Password for portal access.');
                 window.location.href = '../index.php';
               </script>";
         exit();
 
     } catch (\PDOException $e) {
+        // Reverts all database changes if any insertion fails.
+        $pdo->rollBack();
+        
+        // Intercepts duplicate email registration attempts.
+        if ($e->getCode() == 23000) {
+            die("Error: The provided email address is already registered within the system.");
+        }
         die("Database Error: " . $e->getMessage());
     }
 } else {
+    // Redirects anomalous requests back to the application form.
     header("Location: ../apply.php");
     exit();
 }
