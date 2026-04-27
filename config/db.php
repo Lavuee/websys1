@@ -16,7 +16,10 @@ $options = [
 
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
-} catch (\PDOException $e) {
-    throw new \PDOException($e->getMessage(), (int)$e->getCode());
+} catch (PDOException $e) {
+    // Don't expose DB details to the browser
+    error_log("DB connection failed: " . $e->getMessage());
+    die("A database error occurred. Please contact the administrator.");
 }
+ 
 ?>
