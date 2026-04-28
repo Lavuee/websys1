@@ -36,6 +36,7 @@
 
         <div style="display: flex; gap: 15px; margin-bottom: 60px;">
             <a href="apply.php" class="btn btn-primary" style="padding: 12px 24px;">Apply for Enrollment &rarr;</a>
+            <a href="track_status.php" class="btn btn-outline glass-panel" style="padding: 12px 24px;">Track Application</a>
             <a href="login.php" class="btn btn-outline glass-panel" style="padding: 12px 24px;">Student Portal</a>
         </div>
 

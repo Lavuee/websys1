@@ -3,10 +3,10 @@
 session_start();
 
 // Establishes the database connection.
-require_once '../config/db.php'; 
+require_once '../config/db.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    
+
     // Generates a unique tracking identifier for the enrollment application.
     $tracking_no = 'ENR-' . date('Y') . '-' . strtoupper(substr(uniqid(), -5));
     $student_email = filter_var($_POST['student_email'], FILTER_SANITIZE_EMAIL);
@@ -27,17 +27,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         $stmtStudent->execute([
-            $user_id, 
-            $_POST['lrn'] ?: null, 
-            $_POST['first_name'], 
-            $_POST['middle_name'] ?: null, 
-            $_POST['last_name'], 
-            $_POST['suffix'] ?: null, 
-            $_POST['date_of_birth'] ?: null, 
-            $_POST['gender'] ?: null, 
-            $_POST['contact_number'] ?: null, 
-            $_POST['address'] ?: null, 
-            $_POST['guardian_name'] ?: null, 
+            $user_id,
+            $_POST['lrn'] ?: null,
+            $_POST['first_name'],
+            $_POST['middle_name'] ?: null,
+            $_POST['last_name'],
+            $_POST['suffix'] ?: null,
+            $_POST['date_of_birth'] ?: null,
+            $_POST['gender'] ?: null,
+            $_POST['contact_number'] ?: null,
+            $_POST['address'] ?: null,
+            $_POST['guardian_name'] ?: null,
             $_POST['guardian_contact'] ?: null
         ]);
         $student_id = $pdo->lastInsertId();
@@ -48,9 +48,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             VALUES (?, ?, 1, ?, ?, 'Pending')
         ");
         $stmtEnr->execute([
-            $tracking_no, 
-            $student_id, 
-            $_POST['grade_level'], 
+            $tracking_no,
+            $student_id,
+            $_POST['grade_level'],
             $_POST['strand']
         ]);
 
@@ -59,15 +59,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // Redirects to the landing page with authentication instructions.
         echo "<script>
-                alert('Application submitted successfully. Please record the Student ID: " . $tracking_no . "\\n\\nThis ID functions as both the Username and Password for portal access.');
-                window.location.href = '../index.php';
+                alert('Application submitted! Please select your subjects and section.');
+                window.location.href = '../select_subjects.php?enrollment_id=" . $enrollment_id . "';
               </script>";
         exit();
 
     } catch (\PDOException $e) {
         // Reverts all database changes if any insertion fails.
         $pdo->rollBack();
-        
+
         // Intercepts duplicate email registration attempts.
         if ($e->getCode() == 23000) {
             die("Error: The provided email address is already registered within the system.");
