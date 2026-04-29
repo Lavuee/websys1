@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pines National High School | Enrollment</title>
+    <title>Pines City National High School | Enrollment</title>
     <link rel="stylesheet" href="assets/css/style.css?v=<?= time(); ?>">
     
     <script>
@@ -75,7 +75,7 @@
     </main>
 
     <footer style="text-align: center; padding: 30px; color: var(--text-muted); font-size: 0.85rem; border-top: 1px solid var(--glass-border); background: var(--glass-bg);">
-        &copy; <?= date('Y') ?> Pines National High School. All rights reserved.
+        &copy; <?= date('Y') ?> Pines City National High School. All rights reserved.
     </footer>
 
     <script>
