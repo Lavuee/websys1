@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enrollment Application | Pines NHS</title>
+    <title>Registration Form | Pines NHS</title>
     
     <link rel="stylesheet" href="assets/css/style.css?v=<?= time(); ?>">
     <script>
