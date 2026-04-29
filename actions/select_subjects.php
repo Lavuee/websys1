@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Select Subjects & Section | Pines NHS</title>
     
-    <link rel="stylesheet" href="assets/css/style.css?v=<?= time(); ?>">
+    <link rel="stylesheet" href="../assets/css/style.css?v=<?= time(); ?>">
     <script>
         if (localStorage.getItem('theme') === 'dark' || 
            (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
