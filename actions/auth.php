@@ -39,4 +39,12 @@ function check_student() {
         exit();
     }
 }
+
+function check_faculty() {
+    check_auth();
+    if (strtolower($_SESSION['role']) !== 'faculty') {
+        header("Location: ../login.php?ref=forbidden");
+        exit();
+    }
+}
 ?>

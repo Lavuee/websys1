@@ -60,7 +60,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Redirects to the landing page with authentication instructions.
         echo "<script>
                 alert('Application submitted! Please select your subjects and section.');
-                window.location.href = '../select_subjects.php?enrollment_id=" . $enrollment_id . "';
+                window.location.href = 'select_subjects.php?enrollment_id=" . $tracking_no . "';
               </script>";
         exit();
 

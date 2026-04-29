@@ -1,25 +1,25 @@
 <?php
 // Pines EMS Authentication Controller
-// Initializes session management and verifies active authentication tokens.
 session_start();
 
-// Redirects authenticated users to their designated dashboards to prevent redundant logins.
+// Redirects authenticated users to their designated dashboards
 if (isset($_SESSION['user_id'])) {
-    if (strtolower($_SESSION['role']) === 'admin') {
+    $current_role = strtolower($_SESSION['role']);
+    if ($current_role === 'admin') {
         header("Location: admin/dashboard.php");
+    } elseif ($current_role === 'faculty') {
+        header("Location: faculty/dashboard.php");
     } else {
         header("Location: student/dashboard.php");
     }
     exit();
 }
 
-// Establishes the database connection parameters.
 require_once 'config/db.php';
 
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Sanitizes incoming authentication payload.
     $login_id  = trim(htmlspecialchars($_POST['login_id'] ?? ''));
     $password  = $_POST['password'] ?? '';
     $role      = $_POST['role'] ?? 'student';
@@ -27,24 +27,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($login_id) || empty($password)) {
         $error = "Missing required authentication parameters.";
 
-    } elseif ($role === 'admin') {
-        // Authenticates administrative personnel against the centralized users table.
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ? AND role = 'Admin' LIMIT 1");
+    } elseif ($role === 'faculty') {
+        // Authenticates both Faculty and Admin personnel
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ? AND role IN ('Admin', 'Faculty') LIMIT 1");
         $stmt->execute([$login_id]);
-        $admin = $stmt->fetch(PDO::FETCH_ASSOC);
+        $staff = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($admin && password_verify($password, $admin['password_hash'])) {
-            $_SESSION['user_id']    = $admin['user_id'];
-            $_SESSION['role']       = 'Admin';
-            $_SESSION['user_email'] = $admin['email'];
-            header("Location: admin/dashboard.php");
+        if ($staff && password_verify($password, $staff['password_hash'])) {
+            $_SESSION['user_id']    = $staff['user_id'];
+            $_SESSION['role']       = $staff['role']; 
+            $_SESSION['user_email'] = $staff['email'];
+            
+            $redirect_dir = strtolower($staff['role']);
+            header("Location: {$redirect_dir}/dashboard.php");
             exit();
         } else {
-            $error = "Invalid administrative credentials. Verify registered email and password.";
+            $error = "Invalid credentials. Verify registered email and password.";
         }
 
     } else {
-        // Authenticates student access using the enrollment tracking number logic.
+        // Authenticates student access
         $stmt = $pdo->prepare("
             SELECT u.*, e.enrollment_id, s.first_name, s.last_name 
             FROM enrollments e
@@ -76,219 +78,235 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login — Pines EMS</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="assets/css/style.css?v=<?= time(); ?>">
+    <script>
+        if (localStorage.getItem('theme') === 'dark' || 
+           (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+            document.documentElement.removeAttribute('data-theme');
+        }
+    </script>
 
     <style>
-        /* UI Polish and Branding Adjustments */
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #166534 100%);
-            min-height: 100vh;
-        }
-
-        .login-card {
-            border: none;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+        /* Specific overrides for the login interface utilizing universal CSS variables */
+        .login-container {
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
         }
 
         .brand-icon {
-            width: 68px;
-            height: 68px;
-            background: #166534;
+            width: 60px;
+            height: 60px;
+            background: var(--primary-color);
             border-radius: 16px;
-            box-shadow: 0 6px 20px rgba(22, 101, 52, 0.4);
-        }
-
-        .nav-pills .nav-link {
-            color: #6c757d;
-            font-weight: 500;
-            font-size: 0.875rem;
-            border-radius: 8px;
-            padding: 0.45rem 1rem;
-        }
-
-        .nav-pills .nav-link.active {
-            background-color: #166534;
-            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            box-shadow: 0 6px 20px rgba(22, 101, 52, 0.3);
         }
 
         .nav-pills-wrap {
-            background: #f8f9fa;
+            display: flex;
+            background: rgba(100, 116, 139, 0.1);
+            border: 1px solid var(--glass-border);
             border-radius: 10px;
-            padding: 4px;
+            padding: 5px;
+            margin-bottom: 25px;
+        }
+
+        .role-tab {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            transition: all 0.3s ease;
+        }
+
+        .role-tab.active {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            background: var(--bg-color); /* Inherits theme background */
+            color: var(--text-main);     /* Inherits theme text color */
+            transition: all 0.3s ease;
         }
 
         .form-control:focus {
-            border-color: #166534;
-            box-shadow: 0 0 0 3px rgba(22, 101, 52, 0.12);
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(22, 101, 52, 0.15);
         }
 
-        .btn-login {
-            background-color: #166534;
-            border-color: #166534;
-            font-weight: 600;
-            letter-spacing: 0.01em;
-        }
-
-        .btn-login:hover, .btn-login:focus {
-            background-color: #14532d;
-            border-color: #14532d;
+        .pw-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
         }
 
         .toggle-pw {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
             cursor: pointer;
-            color: #6c757d;
-            border-left: 1px solid #dee2e6;
+            padding: 0;
+            display: flex;
         }
-
-        .toggle-pw:hover { color: #166534; }
-
-        .form-hint { font-size: 0.75rem; color: #6c757d; }
-        .text-green { color: #166534 !important; }
-        .text-green:hover { color: #14532d !important; }
+        
+        .toggle-pw:hover { color: var(--primary-color); }
+        .form-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 6px; }
+        
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-align: left;
+        }
+        .alert-success { background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.3); color: #22c55e; }
+        .alert-danger { background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; }
     </style>
 </head>
-<body class="d-flex align-items-center justify-content-center py-5">
+<body style="display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px;">
 
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-12 col-sm-9 col-md-7 col-lg-5 col-xl-4">
+    <a href="index.php" class="btn btn-outline" style="position: absolute; top: 20px; left: 20px;">
+        &larr; Back to Home
+    </a>
 
-            <div class="text-center mb-4">
-                <div class="brand-icon d-flex align-items-center justify-content-center mx-auto mb-3">
-                    <i class="bi bi-mortarboard-fill text-white fs-2"></i>
-                </div>
-                <h1 class="fs-5 fw-bold text-white mb-1">Pines Enrollment System</h1>
-                <p class="text-white-50 small mb-0">School Year 2025–2026</p>
-            </div>
+    <button onclick="toggleTheme()" class="btn btn-outline" style="position: absolute; top: 20px; right: 20px; padding: 8px; border-radius: 50%;" title="Toggle Theme">
+        🌓
+    </button>
 
-            <div class="card login-card">
-                <div class="card-body p-4">
-
-                    <h2 class="fs-6 fw-semibold text-center text-dark mb-4">Account Access Portal</h2>
-
-                    <div class="nav-pills-wrap mb-4">
-                        <ul class="nav nav-pills nav-fill" id="roleTabs">
-                            <li class="nav-item">
-                                <button class="nav-link active w-100" id="tab-student" type="button" onclick="switchRole('student')">
-                                    <i class="bi bi-person me-1"></i> Student
-                                </button>
-                            </li>
-                            <li class="nav-item">
-                                <button class="nav-link w-100" id="tab-admin" type="button" onclick="switchRole('admin')">
-                                    <i class="bi bi-shield-lock me-1"></i> Admin
-                                </button>
-                            </li>
-                        </ul>
-                    </div>
-
-                    <?php if (isset($_GET['logged_out'])): ?>
-                    <div class="alert alert-success d-flex align-items-center gap-2 py-2 small" role="alert">
-                        <i class="bi bi-check-circle-fill"></i>
-                        Secure logout completed successfully.
-                    </div>
-                    <?php endif; ?>
-
-                    <?php if ($error): ?>
-                    <div class="alert alert-danger d-flex align-items-center gap-2 py-2 small" role="alert">
-                        <i class="bi bi-exclamation-circle-fill"></i>
-                        <?= htmlspecialchars($error) ?>
-                    </div>
-                    <?php endif; ?>
-
-                    <form method="POST" action="login.php" novalidate>
-                        <input type="hidden" name="role" id="role-input" value="student">
-
-                        <div class="mb-3">
-                            <label for="login_id" class="form-label fw-semibold small" id="login-label">
-                                Enrollment ID
-                            </label>
-                            <input
-                                type="text"
-                                class="form-control"
-                                id="login_id"
-                                name="login_id"
-                                placeholder="e.g. ENR-2026-XXXXX"
-                                value="<?= htmlspecialchars($_POST['login_id'] ?? '') ?>"
-                                autocomplete="username"
-                                required
-                            >
-                            <div class="form-hint mt-1" id="login-hint">
-                                Submit registered Enrollment ID (e.g. ENR-2026-A2645)
-                            </div>
-                        </div>
-
-                        <div class="mb-4">
-                            <label for="password" class="form-label fw-semibold small">Password</label>
-                            <div class="input-group">
-                                <input
-                                    type="password"
-                                    class="form-control"
-                                    id="password"
-                                    name="password"
-                                    placeholder="Enter access password"
-                                    autocomplete="current-password"
-                                    required
-                                >
-                                <button
-                                    class="btn btn-outline-secondary toggle-pw"
-                                    type="button"
-                                    onclick="togglePassword()"
-                                    title="Toggle password visibility"
-                                >
-                                    <i class="bi bi-eye" id="eye-icon"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-login btn-primary" id="submit-btn">
-                                <i class="bi bi-box-arrow-in-right me-1"></i>
-                                Authenticate as Student
-                            </button>
-                        </div>
-                    </form>
-
-                    <hr class="my-3 text-muted opacity-25">
-
-                    <p class="text-center small text-muted mb-0">
-                        Authentication issues? <a href="mailto:registrar@pines.edu.ph" class="text-green fw-medium text-decoration-none">Contact system administration</a>
-                    </p>
-                    <p class="text-center small mt-2 mb-0">
-                        <a href="index.php" class="text-green fw-medium text-decoration-none">
-                            <i class="bi bi-arrow-left me-1"></i>Return to Landing Page
-                        </a>
-                    </p>
-
-                </div>
-            </div>
-
-            <p class="text-center text-white-50 small mt-3 mb-0">
-                &copy; <?= date('Y') ?> Pines EMS. Internal system property.
-            </p>
-
+        <div class="login-container">
+        <div class="brand-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 19h8a4 4 0 0 0 3.8-2.8l2-7A4 4 0 0 0 18 5h-1.5c-.8 0-1.5.3-2 1l-2.5 3.5"/>
+            </svg>
         </div>
-    </div>
-</div>
+        <h1 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 5px; color: var(--text-main);">Pines Enrollment System</h1>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 30px;">School Year 2026–2027</p>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+        <div class="glass-panel" style="padding: 35px 30px;">
+            <h2 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 20px; color: var(--text-main);">Account Access Portal</h2>
+
+            <div class="nav-pills-wrap">
+                <button class="role-tab active" id="tab-student" type="button" onclick="switchRole('student')">
+                    <i class="bi bi-person me-1"></i> Student
+                </button>
+                <button class="role-tab" id="tab-faculty" type="button" onclick="switchRole('faculty')">
+                    <i class="bi bi-person-badge me-1"></i> Faculty
+                </button>
+            </div>
+
+            <?php if (isset($_GET['logged_out'])): ?>
+            <div class="alert alert-success">
+                <i class="bi bi-check-circle-fill"></i> Secure logout completed successfully.
+            </div>
+            <?php endif; ?>
+
+            <?php if ($error): ?>
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-circle-fill"></i> <?= htmlspecialchars($error) ?>
+            </div>
+            <?php endif; ?>
+
+            <form method="POST" action="login.php" novalidate>
+                <input type="hidden" name="role" id="role-input" value="student">
+
+                <div class="form-group">
+                    <label for="login_id" class="form-label" id="login-label">Enrollment ID</label>
+                    <input type="text" class="form-control" id="login_id" name="login_id" placeholder="e.g. ENR-2026-XXXXX" value="<?= htmlspecialchars($_POST['login_id'] ?? '') ?>" autocomplete="username" required>
+                    <div class="form-hint" id="login-hint">Submit registered Enrollment ID (e.g. ENR-2026-A2645)</div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 30px;">
+                    <label for="password" class="form-label">Password</label>
+                    <div class="pw-wrapper">
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Enter access password" autocomplete="current-password" required>
+                        <button class="toggle-pw" type="button" onclick="togglePassword()" title="Toggle password visibility">
+                            <i class="bi bi-eye" id="eye-icon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="submit-btn" style="width: 100%; padding: 12px; font-size: 1rem;">
+                    <i class="bi bi-box-arrow-in-right me-1"></i> Authenticate as Student
+                </button>
+            </form>
+
+            <hr style="border: 0; height: 1px; background: var(--glass-border); margin: 25px 0;">
+
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0;">
+                Authentication issues? <a href="mailto:registrar@pines.edu.ph" style="color: var(--primary-color); font-weight: 500; text-decoration: none;">Contact administration</a>
+            </p>
+        </div>
+
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 20px;">
+            &copy; <?= date('Y') ?> Pines EMS. Internal system property.
+        </p>
+    </div>
+
 <script>
-    // Manages dynamic UI rendering based on the selected authorization role.
+    // Theme toggle functionality specifically for the login page layout
+    function toggleTheme() {
+        const html = document.documentElement;
+        if (html.hasAttribute('data-theme')) {
+            html.removeAttribute('data-theme');
+            localStorage.setItem('theme', 'light');
+        } else {
+            html.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+        }
+    }
+
+    // Manages dynamic UI rendering based on the selected authorization role
     function switchRole(role) {
-        const isAdmin = role === 'admin';
+        const isFaculty = role === 'faculty';
 
         document.getElementById('role-input').value = role;
-        document.getElementById('tab-student').classList.toggle('active', !isAdmin);
-        document.getElementById('tab-admin').classList.toggle('active', isAdmin);
+        document.getElementById('tab-student').classList.toggle('active', !isFaculty);
+        document.getElementById('tab-faculty').classList.toggle('active', isFaculty);
 
-        if (isAdmin) {
-            document.getElementById('login-label').textContent = 'Admin Email';
-            document.getElementById('login_id').placeholder    = 'Admin email address';
-            document.getElementById('login-hint').textContent  = 'Submit authorized administrative email.';
-            document.getElementById('submit-btn').innerHTML    = '<i class="bi bi-shield-lock me-1"></i> Authenticate as Admin';
+        if (isFaculty) {
+            document.getElementById('login-label').textContent = 'Email Address';
+            document.getElementById('login_id').placeholder    = 'Faculty or Admin email address';
+            document.getElementById('login-hint').textContent  = 'Submit authorized staff email.';
+            document.getElementById('submit-btn').innerHTML    = '<i class="bi bi-person-badge me-1"></i> Authenticate as Faculty';
         } else {
             document.getElementById('login-label').textContent = 'Student ID';
             document.getElementById('login_id').placeholder    = 'e.g. ENR-2026-XXXXX';
@@ -297,7 +315,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Handles password field masking operations.
+    // Handles password field masking operations
     function togglePassword() {
         const pw   = document.getElementById('password');
         const icon = document.getElementById('eye-icon');
@@ -306,7 +324,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         icon.className = isHidden ? 'bi bi-eye-slash' : 'bi bi-eye';
     }
 
-    // Restores the correct interface tab if authentication fails and reloads the page.
+    // Restores the correct interface tab if authentication fails
     const savedRole = "<?= htmlspecialchars($_POST['role'] ?? 'student') ?>";
     switchRole(savedRole);
 </script>
