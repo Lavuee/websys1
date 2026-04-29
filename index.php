@@ -46,7 +46,7 @@
         </p>
 
         <div style="display: flex; gap: 15px; margin-bottom: 60px; flex-wrap: wrap; justify-content: center;">
-            <a href="apply.php" class="btn btn-primary" style="padding: 12px 24px; font-size: 1rem;">Apply for Enrollment &rarr;</a>
+            <a href="apply.php" class="btn btn-primary" style="padding: 12px 24px; font-size: 1rem;">Registration &rarr;</a>
             <a href="actions/track_status.php" class="btn btn-outline" style="padding: 12px 24px; font-size: 1rem;">Track Application</a>
             <a href="login.php" class="btn btn-outline" style="padding: 12px 24px; font-size: 1rem;">Student Portal</a>
         </div>
