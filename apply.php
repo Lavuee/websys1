@@ -132,7 +132,7 @@
                             <option value="TVL-ICT">TVL-ICT</option>
                         </select>
                     </div>
-                    <div class="form-group full-width"><label class="form-label">Learner Reference Number (LRN) *</label><input type="text" class="form-control" name="lrn" required></div>
+                    <div class="form-group full-width"><label class="form-label">Learner Reference Number (LRN) *</label><input type="text" class="form-control" name="lrn" required maxlength ="12" minlength ="12" pattern="\d{12}" tittle= "LRN must be exactly 12 digits"></div>
                     <div class="form-group full-width"><label class="form-label">Last School Attended *</label><input type="text" class="form-control" name="previous_school" required></div>
                 </div>
             </div>
