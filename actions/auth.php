@@ -17,7 +17,7 @@ function check_auth() {
 }
 
 /**
- * Restricts module access to administrative personnel.
+ * Restricts module access t    o administrative personnel.
  * Redirects non-compliant requests to prevent privilege escalation.
  */
 function check_admin() {
