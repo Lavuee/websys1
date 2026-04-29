@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registration Form | Pines NHS</title>
+    <title>Enrollment AMS| Pines NHS</title>
     
     <link rel="stylesheet" href="assets/css/style.css?v=<?= time(); ?>">
     <script>
@@ -56,7 +56,7 @@
         <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 30px;">
             <a href="index.php" class="btn btn-outline" style="padding: 8px 16px;">&larr; Home</a>
             <div>
-                <h2 style="font-size: 1.8rem; margin-bottom: 5px; color: var(--text-main);">Enrollment Application</h2>
+                <h2 style="font-size: 1.8rem; margin-bottom: 5px; color: var(--text-main);">Registration Form</h2>
                 <p class="text-muted" style="font-size: 0.95rem; margin: 0;">School Year <?= date('Y') ?>-<?= date('Y') + 1 ?></p>
             </div>
         </div>
