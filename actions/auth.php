@@ -17,7 +17,7 @@ function check_auth() {
 }
 
 /**
- * Restricts module access to administrative personnel.
+ * Restricts module access t    o administrative personnel.
  * Redirects non-compliant requests to prevent privilege escalation.
  */
 function check_admin() {
@@ -35,6 +35,14 @@ function check_admin() {
 function check_student() {
     check_auth();
     if (strtolower($_SESSION['role']) !== 'student') {
+        header("Location: ../login.php?ref=forbidden");
+        exit();
+    }
+}
+
+function check_faculty() {
+    check_auth();
+    if (strtolower($_SESSION['role']) !== 'faculty') {
         header("Location: ../login.php?ref=forbidden");
         exit();
     }

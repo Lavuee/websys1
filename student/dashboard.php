@@ -43,7 +43,7 @@ try {
     <link rel="stylesheet" href="../assets/css/style.css">
     <style>
         .layout { display: flex; min-height: 100vh; }
-        .sidebar { width: 260px; border-right: 1px solid var(--glass-border); padding: 20px; display: flex; flex-direction: column; background: var(--glass-bg); backdrop-filter: blur(12px); }
+        .sidebar { width: 280px; border-right: 1px solid var(--glass-border); padding: 24px; display: flex; flex-direction: column; background: var(--glass-bg); backdrop-filter: blur(15px); position: sticky; top: 0; height: 100vh; z-index: 50;}
         .main-content { flex: 1; padding: 40px; }
         .nav-link { display: block; padding: 12px 15px; margin-bottom: 5px; border-radius: 8px; color: var(--text-main); font-weight: 500; text-decoration: none; }
         .nav-link:hover, .nav-link.active { background: var(--primary-color); color: white; }
@@ -58,8 +58,11 @@ try {
 <body>
     <div class="layout">
         <aside class="sidebar">
-            <div class="logo-container" style="margin-bottom: 40px;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-primary"><path d="M8 19h8a4 4 0 0 0 3.8-2.8l2-7A4 4 0 0 0 18 5h-1.5c-.8 0-1.5.3-2 1l-2.5 3.5"/></svg>
+            <div class="logo-container" style="margin-bottom: 40px; display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 1.25rem; color: var(--text-main); letter-spacing: -0.5px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="var(--primary-color)" viewBox="0 0 16 16">
+                    <path d="M8.211 2.047a.5.5 0 0 0-.422 0l-7.5 3.5a.5.5 0 0 0 .025.917l7.5 3a.5.5 0 0 0 .372 0L14 7.14V13a1 1 0 0 0-1 1v2h3v-2a1 1 0 0 0-1-1V6.739l.686-.275a.5.5 0 0 0 .025-.917z"/>
+                    <path d="M4.176 9.032a.5.5 0 0 0-.656.327l-.5 1.7a.5.5 0 0 0 .294.605l4.5 1.8a.5.5 0 0 0 .372 0l4.5-1.8a.5.5 0 0 0 .294-.605l-.5-1.7a.5.5 0 0 0-.656-.327L8 10.466z"/>
+                </svg>
                 Pines NHS
             </div>
             <nav style="flex: 1;">
@@ -68,8 +71,23 @@ try {
                 <a href="records.php" class="nav-link">My Records</a>
             </nav>
             <div style="border-top: 1px solid var(--glass-border); padding-top: 20px; margin-top: auto;">
-                <p style="font-size: 0.85rem; margin-bottom: 10px; font-weight: 600;"><?= htmlspecialchars($_SESSION['user_email']) ?></p>
-                <a href="../logout.php" class="text-muted" style="font-size: 0.85rem;">Sign Out</a>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <?php
+                        $displayName = $_SESSION['student_name'] ?? 'Student';
+                        $initial = strtoupper(substr(trim($displayName), 0, 1));
+                    ?>
+                    <div style="width: 42px; height: 42px; border-radius: 50%; background: var(--primary-color); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 700; flex-shrink: 0; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);">
+                        <?= $initial ?>
+                    </div>
+                    <div style="overflow: hidden;">
+                        <p style="font-size: 0.85rem; margin: 0 0 3px 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main);">
+                            <?= htmlspecialchars($displayName) ?>
+                        </p>
+                        <a href="../logout.php" class="text-muted" style="font-size: 0.8rem; text-decoration: none; transition: color 0.3s;" onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-muted)'">
+                            Sign Out &rarr;
+                        </a>
+                    </div>
+                </div>
             </div>
         </aside>
 
