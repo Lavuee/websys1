@@ -47,26 +47,4 @@ function check_faculty() {
         exit();
     }
 }
-
-/**
- * Restricts module access to registrars.
- */
-function check_registrar() {
-    check_auth();
-    if (strtolower($_SESSION['role']) !== 'registrar') {
-        header("Location: ../login.php?ref=forbidden");
-        exit();
-    }
-}
-
-/**
- * Restricts module access to cashiers.
- */
-function check_cashier() {
-    check_auth();
-    if (strtolower($_SESSION['role']) !== 'cashier') {
-        header("Location: ../login.php?ref=forbidden");
-        exit();
-    }
-}
 ?>

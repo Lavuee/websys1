@@ -1,11 +1,15 @@
 <?php
 // Secures the endpoint to prevent unauthorized execution of financial operations.
 require_once '../actions/auth.php';
+<<<<<<< HEAD
 check_auth();
 if (!in_array(strtolower($_SESSION['role']), ['admin', 'cashier'])) {
     header("Location: ../login.php?ref=forbidden");
     exit();
 }
+=======
+check_admin();
+>>>>>>> dbdd5749f364f3c7d839fdd3a066713feed4aaf4
 
 // Initializes the database connection.
 require_once '../config/db.php';
@@ -72,11 +76,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // Commits the transaction and redirects the administrator.
         $pdo->commit();
+<<<<<<< HEAD
         if (strtolower($_SESSION['role']) === 'cashier') {
             header("Location: ../cashier/dashboard.php");
         } else {
             header("Location: ../admin/payments.php");
         }
+=======
+        header("Location: ../admin/payments.php");
+>>>>>>> dbdd5749f364f3c7d839fdd3a066713feed4aaf4
         exit();
 
     } catch (\PDOException $e) {
@@ -86,11 +94,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 } else {
     // Redirects anomalous direct access attempts.
+<<<<<<< HEAD
     if (strtolower($_SESSION['role']) === 'cashier') {
         header("Location: ../cashier/dashboard.php");
     } else {
         header("Location: ../admin/payments.php");
     }
+=======
+    header("Location: ../admin/payments.php");
+>>>>>>> dbdd5749f364f3c7d839fdd3a066713feed4aaf4
     exit();
 }
 ?>

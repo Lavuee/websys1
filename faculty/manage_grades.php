@@ -195,7 +195,6 @@ include 'includes/faculty_header.php';
                         <input type="number" step="0.01" name="q4" id="modalQ4" class="form-control">
                     </div>
                 </div>
-
                 <div style="display: flex; justify-content: flex-end; gap: 10px;">
                     <button type="button" class="btn btn-outline" onclick="closeGradeModal()">Cancel</button>
                     <button type="submit" class="btn btn-primary">Save Assessment</button>
