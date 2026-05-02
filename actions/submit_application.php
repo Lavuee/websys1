@@ -10,6 +10,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Generates a unique tracking identifier for the enrollment application.
     $tracking_no = 'ENR-' . date('Y') . '-' . strtoupper(substr(uniqid(), -5));
     $student_email = filter_var($_POST['student_email'], FILTER_SANITIZE_EMAIL);
+    
+    // Sets up file upload directory and parsing logic
+    $upload_dir = '../uploads/';
+    if (!is_dir($upload_dir)) {
+        mkdir($upload_dir, 0777, true);
+    }
+
+    $processUpload = function($fileKey, $prefix) use ($upload_dir) {
+        if (isset($_FILES[$fileKey]) && $_FILES[$fileKey]['error'] === UPLOAD_ERR_OK) {
+            $ext = strtolower(pathinfo($_FILES[$fileKey]['name'], PATHINFO_EXTENSION));
+            $allowed = ['pdf', 'jpg', 'jpeg', 'png'];
+            if (in_array($ext, $allowed)) {
+                $filename = $prefix . '_' . time() . '_' . uniqid() . '.' . $ext;
+                if (move_uploaded_file($_FILES[$fileKey]['tmp_name'], $upload_dir . $filename)) {
+                    return $filename;
+                }
+            }
+        }
+        return null;
+    };
+
+    // Process the uploaded requirement documents
+    $doc_birth_cert  = $processUpload('doc_birth_cert', 'psa');
+    $doc_report_card = $processUpload('doc_report_card', 'f138');
+    $doc_good_moral  = $processUpload('doc_good_moral', 'gmoral');
 
     try {
         // Initiates a database transaction to ensure atomicity across multiple table insertions.
@@ -23,8 +48,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // Records the permanent demographic profile of the student.
         $stmtStudent = $pdo->prepare("
-            INSERT INTO students (user_id, lrn, first_name, middle_name, last_name, suffix, date_of_birth, gender, contact_number, address, guardian_name, guardian_contact) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO students (user_id, lrn, first_name, middle_name, last_name, suffix, date_of_birth, gender, contact_number, address, guardian_name, guardian_relationship, guardian_contact, previous_school, psa_birth_cert, form_138, good_moral) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         $stmtStudent->execute([
             $user_id,
@@ -38,7 +63,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_POST['contact_number'] ?: null,
             $_POST['address'] ?: null,
             $_POST['guardian_name'] ?: null,
-            $_POST['guardian_contact'] ?: null
+            $_POST['guardian_relationship'] ?: null,
+            $_POST['guardian_contact'] ?: null,
+            $_POST['previous_school'] ?: null,
+            $doc_birth_cert,
+            $doc_report_card,
+            $doc_good_moral
         ]);
         $student_id = $pdo->lastInsertId();
 

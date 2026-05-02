@@ -10,14 +10,17 @@ require_once '../config/db.php';
 $gradeFilter = $_GET['grade'] ?? '';
 $searchQuery = trim($_GET['search'] ?? '');
 $sortFilter  = $_GET['sort'] ?? 'grade_asc';
+$successMsg  = $_GET['success'] ?? '';
+$errorMsg    = $_GET['error'] ?? '';
 
 try {
     // 2. Build the base query
     $query = "
-        SELECT s.subject_id, s.subject_name, s.grade_level, s.faculty_id, 
+        SELECT s.subject_id, s.subject_code, s.subject_name, s.grade_level, s.faculty_id, 
                u.email AS faculty_email 
         FROM subjects s
-        LEFT JOIN users u ON s.faculty_id = u.user_id
+        LEFT JOIN faculty f ON s.faculty_id = f.faculty_id
+        LEFT JOIN users u ON f.user_id = u.user_id
     ";
     
     $conditions = [];
@@ -106,6 +109,18 @@ include 'includes/admin_header.php';
                 </button>
             </div>
 
+            <?php if (!empty($successMsg)): ?>
+                <div style="padding: 12px; margin-bottom: 20px; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.3); color: #22c55e; border-radius: 8px;">
+                    <i class="bi bi-check-circle-fill"></i> <?= htmlspecialchars($successMsg) ?>
+                </div>
+            <?php endif; ?>
+
+            <?php if (!empty($errorMsg)): ?>
+                <div style="padding: 12px; margin-bottom: 20px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; border-radius: 8px;">
+                    <i class="bi bi-exclamation-triangle-fill"></i> <?= htmlspecialchars($errorMsg) ?>
+                </div>
+            <?php endif; ?>
+
             <div class="glass-panel">
                 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
@@ -145,6 +160,7 @@ include 'includes/admin_header.php';
                 <table class="table-wrapper">
                     <thead>
                         <tr>
+                            <th>Subject Code</th>
                             <th>Subject Name</th>
                             <th>Grade Level</th>
                             <th>Assigned Faculty</th>
@@ -154,6 +170,9 @@ include 'includes/admin_header.php';
                     <tbody>
                         <?php foreach ($subjects as $row): ?>
                             <tr>
+                                <td style="font-family: monospace; font-size: 0.95rem; font-weight: 600; color: var(--primary-color);">
+                                    <?= htmlspecialchars($row['subject_code']) ?>
+                                </td>
                                 <td style="font-weight: 600; color: var(--text-main);">
                                     <?= htmlspecialchars($row['subject_name']) ?>
                                 </td>
@@ -165,7 +184,7 @@ include 'includes/admin_header.php';
                                 <td>
                                     <?php if ($row['faculty_email']): ?>
                                         <div style="display: flex; align-items: center; gap: 8px;">
-                                            <span style="font-size: 1.2rem;">👨‍🏫</span>
+                                            <i class="bi bi-person-badge text-primary" style="font-size: 1.1rem;"></i>
                                             <span class="text-muted" style="font-size: 0.9rem;"><?= htmlspecialchars($row['faculty_email']) ?></span>
                                         </div>
                                     <?php else: ?>
@@ -173,16 +192,22 @@ include 'includes/admin_header.php';
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <button class="btn btn-outline" style="padding: 5px 10px; font-size: 0.8rem;" onclick='openModal("edit", <?= json_encode($row) ?>)'>
-                                        ✎ Edit
-                                    </button>
+                                    <div style="display: flex; gap: 8px;">
+                                        <button class="btn btn-outline" style="padding: 5px 10px; font-size: 0.8rem;" onclick='openModal("edit", <?= json_encode($row) ?>)'>
+                                            <i class="bi bi-pencil-square"></i> Edit
+                                        </button>
+                                        <form action="../actions/delete_subject.php" method="POST" style="margin: 0;" onsubmit="return confirm('Are you sure you want to permanently delete this subject?');">
+                                            <input type="hidden" name="subject_id" value="<?= $row['subject_id'] ?>">
+                                            <button type="submit" class="btn btn-outline" style="padding: 5px 10px; font-size: 0.8rem; color: #ef4444; border-color: rgba(239, 68, 68, 0.4);"><i class="bi bi-trash"></i> Delete</button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
                         
                         <?php if (empty($subjects)): ?>
                             <tr>
-                                <td colspan="4" style="text-align: center; padding: 30px; color: var(--text-muted);">
+                                <td colspan="5" style="text-align: center; padding: 30px; color: var(--text-muted);">
                                     <?php if ($searchQuery || $gradeFilter): ?>
                                         No subjects found matching your search or filters.
                                     <?php else: ?>
@@ -207,6 +232,11 @@ include 'includes/admin_header.php';
             
             <form action="../actions/save_subject_admin.php" method="POST">
                 <input type="hidden" name="subject_id" id="modalSubjectId">
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:5px;">Subject Code</label>
+                    <input type="text" name="subject_code" id="modalSubjectCode" required placeholder="e.g. MATH7" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--glass-border); background:transparent; color:var(--text-main);">
+                </div>
 
                 <div style="margin-bottom: 15px;">
                     <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:5px;">Subject Name</label>
@@ -255,11 +285,13 @@ include 'includes/admin_header.php';
             
             if (type === 'edit') {
                 document.getElementById('modalSubjectId').value = data.subject_id;
+                document.getElementById('modalSubjectCode').value = data.subject_code;
                 document.getElementById('modalSubjectName').value = data.subject_name;
                 document.getElementById('modalGradeLevel').value = data.grade_level;
                 document.getElementById('modalFacultyId').value = data.faculty_id || '';
             } else {
                 document.getElementById('modalSubjectId').value = '';
+                document.getElementById('modalSubjectCode').value = '';
                 document.getElementById('modalSubjectName').value = '';
                 document.getElementById('modalGradeLevel').value = '';
                 document.getElementById('modalFacultyId').value = '';

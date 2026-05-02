@@ -14,15 +14,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $total_assessment = (float) $_POST['total_assessment'];
 
     try {
-        // Because the Admin might be changing the Total Assessment, we need to recalculate their balance.
-        $payStmt = $pdo->prepare("SELECT SUM(amount) as paid FROM payments WHERE enrollment_id = :id AND status = 'Verified'");
-        $payStmt->execute([':id' => $enrollment_id]);
-        $paid = (float) $payStmt->fetchColumn();
-
-        // Now we calculate the new balance. We prevent negative balances just in case.
-        $balance = $total_assessment - $paid;
-        if ($balance < 0) {
+        if ($status === 'Pending' || $status === 'Rejected') {
+            $total_assessment = 0;
             $balance = 0;
+
+            // Auto-reject pending payments so they don't linger on cashier/admin boards
+            $stmtRej = $pdo->prepare("UPDATE payments SET status = 'Rejected' WHERE enrollment_id = :id AND status = 'Pending'");
+            $stmtRej->execute([':id' => $enrollment_id]);
+        } else {
+            // Because the Admin might be changing the Total Assessment, we need to recalculate their balance.
+            $payStmt = $pdo->prepare("SELECT SUM(amount) as paid FROM payments WHERE enrollment_id = :id AND status = 'Verified'");
+            $payStmt->execute([':id' => $enrollment_id]);
+            $paid = (float) $payStmt->fetchColumn();
+
+            // Now we calculate the new balance. We prevent negative balances just in case.
+            $balance = $total_assessment - $paid;
+            if ($balance < 0) {
+                $balance = 0;
+            }
         }
 
         // Finally, we update the main enrollments table with the new data

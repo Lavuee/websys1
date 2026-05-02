@@ -48,14 +48,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $updateEnr->execute([':bal' => $new_balance, ':st' => $new_status, ':eid' => $enrollment_id]);
 
         $pdo->commit();
-        header("Location: ../cashier/dashboard.php");
+        if (strtolower($_SESSION['role']) === 'admin') {
+            header("Location: ../admin/payments.php");
+        } else {
+            header("Location: ../cashier/dashboard.php");
+        }
         exit();
     } catch (\PDOException $e) {
         $pdo->rollBack();
         die("Database Error: " . $e->getMessage());
     }
 } else {
-    header("Location: ../cashier/dashboard.php");
+    if (isset($_SESSION['role']) && strtolower($_SESSION['role']) === 'admin') {
+        header("Location: ../admin/payments.php");
+    } else {
+        header("Location: ../cashier/dashboard.php");
+    }
     exit();
 }
 ?>

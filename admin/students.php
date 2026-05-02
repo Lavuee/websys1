@@ -135,7 +135,7 @@ include 'includes/admin_header.php';
                                         </a>
                                         
                                         <button class="btn btn-outline" style="padding: 5px 10px; font-size: 0.8rem;" onclick='openModal(<?= json_encode($row) ?>)'>
-                                            ✎ Edit
+                                            <i class="bi bi-pencil-square"></i> Edit
                                         </button>
                                     </div>
                                 </td>

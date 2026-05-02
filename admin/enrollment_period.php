@@ -87,7 +87,7 @@ include 'includes/admin_header.php';
                                     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
         
                                     <button type="button" class="btn btn-outline" onclick='openEditModal(<?= json_encode($period) ?>)'>
-                                        ✎ Manage
+                                        <i class="bi bi-pencil-square"></i> Manage
                                     </button>
 
                                     <?php if (!$period['is_active']): ?>

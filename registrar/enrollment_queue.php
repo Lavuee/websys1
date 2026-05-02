@@ -91,7 +91,7 @@ include 'includes/registrar_header.php';
                                         </span>
                                     </td>
                                     <td>
-                                        <button class="btn btn-outline" style="padding: 5px 10px; font-size: 0.8rem;" onclick='openStatusModal(<?= json_encode($row) ?>)'>Update Status</button>
+                                        <a href="student_records.php?search=<?= urlencode($row['tracking_no']) ?>" class="btn btn-outline" style="padding: 5px 10px; font-size: 0.8rem; text-decoration: none;">Update Status</a>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -105,41 +105,6 @@ include 'includes/registrar_header.php';
         </main>
     </div>
 
-    <!-- Status Update Modal -->
-    <div id="statusModal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:2000; justify-content:center; align-items:center;">
-        <div class="glass-panel" style="width:100%; max-width:400px; padding:30px;">
-            <h3 style="margin-bottom:20px;">Update Status</h3>
-            <form action="../actions/update_status.php" method="POST">
-                <input type="hidden" name="enrollment_id" id="m_id">
-                <input type="hidden" name="return_to" value="enrollment_queue.php">
-                
-                <label style="font-size:0.85rem; font-weight:600;">Status</label>
-                <select name="status" id="m_status" style="width:100%; padding:10px; margin:10px 0 25px; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-color); color:var(--text-main);">
-                    <option value="Pending">Pending</option>
-                    <option value="Assessed">Assessed</option>
-                    <option value="Enrolled">Enrolled</option>
-                    <option value="Rejected">Rejected</option>
-                </select>
-                
-                <label style="font-size:0.85rem; font-weight:600;">Total Tuition Assessment (₱)</label>
-                <input type="number" step="0.01" name="total_assessment" id="m_total" style="width:100%; padding:10px; margin:10px 0 25px; border-radius:8px; border:1px solid var(--glass-border); background:transparent; color:var(--text-main);">
-                
-                <div style="display:flex; justify-content:flex-end; gap:10px;">
-                    <button type="button" class="btn btn-outline" onclick="document.getElementById('statusModal').style.display='none'">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Change</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <script src="../assets/js/main.js"></script>
-    <script>
-        function openStatusModal(data) {
-            document.getElementById('m_id').value = data.enrollment_id;
-            document.getElementById('m_status').value = data.status;
-            document.getElementById('m_total').value = data.total_assessment;
-            document.getElementById('statusModal').style.display = 'flex';
-        }
-    </script>
 </body>
 </html>

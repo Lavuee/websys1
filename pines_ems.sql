@@ -205,15 +205,20 @@ CREATE TABLE `students` (
   `address` text DEFAULT NULL,
   `guardian_name` varchar(150) DEFAULT NULL,
   `guardian_contact` varchar(20) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `psa_birth_cert` varchar(255) DEFAULT NULL,
+  `form_138` varchar(255) DEFAULT NULL,
+  `good_moral` varchar(255) DEFAULT NULL,
+  `guardian_relationship` varchar(50) DEFAULT NULL,
+  `previous_school` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `students`
 --
 
-INSERT INTO `students` (`student_id`, `user_id`, `lrn`, `first_name`, `middle_name`, `last_name`, `suffix`, `date_of_birth`, `gender`, `contact_number`, `address`, `guardian_name`, `guardian_contact`, `created_at`) VALUES
-(1, 2, 'adad', 'asd', 'Manok', 'asd', 'asd', '2026-04-10', 'Male', NULL, 'asdasd', 'asd', 'asdasd', '2026-04-29 04:16:17');
+INSERT INTO `students` (`student_id`, `user_id`, `lrn`, `first_name`, `middle_name`, `last_name`, `suffix`, `date_of_birth`, `gender`, `contact_number`, `address`, `guardian_name`, `guardian_contact`, `created_at`, `psa_birth_cert`, `form_138`, `good_moral`, `guardian_relationship`, `previous_school`) VALUES
+(1, 2, 'adad', 'asd', 'Manok', 'asd', 'asd', '2026-04-10', 'Male', NULL, 'asdasd', 'asd', 'asdasd', '2026-04-29 04:16:17', NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 

@@ -8,12 +8,25 @@ try {
     
     // Capture filters
     $filter_subject_id = $_GET['subject_id'] ?? '';
-    $searchQuery = trim($_GET['search'] ?? '');
+    $filter_section    = $_GET['section'] ?? '';
+    $searchQuery       = trim($_GET['search'] ?? '');
 
     // Fetch subjects assigned to this teacher for the filter dropdown
     $subjStmt = $pdo->prepare("SELECT subject_id, subject_name FROM subjects WHERE faculty_id = ? ORDER BY subject_name ASC");
     $subjStmt->execute([$faculty_id]);
     $teacherSubjects = $subjStmt->fetchAll();
+
+    // Fetch distinct sections from the teacher's students for the filter dropdown
+    $secStmt = $pdo->prepare("
+        SELECT DISTINCT e.section 
+        FROM subjects sub
+        JOIN enrollment_subjects es ON sub.subject_name = es.subject_name
+        JOIN enrollments e ON es.enrollment_id = e.enrollment_id
+        WHERE sub.faculty_id = ? AND e.status IN ('Enrolled', 'Assessed') AND e.section IS NOT NULL AND e.section != ''
+        ORDER BY e.section ASC
+    ");
+    $secStmt->execute([$faculty_id]);
+    $teacherSections = $secStmt->fetchAll();
 
     // 1. Fetch the Teacher's Roster using an advanced join strategy
     // We find subjects assigned to the teacher, find students who checked that subject during enrollment, 
@@ -36,6 +49,11 @@ try {
     if (!empty($filter_subject_id)) {
         $query .= " AND sub.subject_id = :subject_id";
         $params[':subject_id'] = $filter_subject_id;
+    }
+
+    if (!empty($filter_section)) {
+        $query .= " AND e.section = :section";
+        $params[':section'] = $filter_section;
     }
 
     if (!empty($searchQuery)) {
@@ -80,6 +98,14 @@ include 'includes/faculty_header.php';
                     </div>
                     
                     <div style="display: flex; align-items: center; gap: 10px;">
+                        <select name="section" onchange="this.form.submit()" style="padding: 8px 12px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--bg-color); color: var(--text-main); font-size: 0.85rem; cursor: pointer;">
+                            <option value="">All Sections</option>
+                            <?php foreach ($teacherSections as $sec): ?>
+                                <option value="<?= htmlspecialchars($sec['section']) ?>" <?= $filter_section == $sec['section'] ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($sec['section']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
                         <select name="subject_id" onchange="this.form.submit()" style="padding: 8px 12px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--bg-color); color: var(--text-main); font-size: 0.85rem; cursor: pointer;">
                             <option value="">All Subjects</option>
                             <?php foreach ($teacherSubjects as $ts): ?>

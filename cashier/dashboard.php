@@ -112,8 +112,8 @@ include 'includes/cashier_header.php';
                                         <input type="hidden" name="payment_id" value="<?= $row['payment_id'] ?>">
                                         <input type="hidden" name="enrollment_id" value="<?= $row['enrollment_id'] ?>">
                                         
-                                        <button type="submit" name="action" value="Approve" class="btn btn-primary" style="padding: 6px 12px; font-size: 0.8rem;">Approve</button>
-                                        <button type="submit" name="action" value="Reject" class="btn btn-outline" style="padding: 6px 12px; font-size: 0.8rem; color: #ef4444; border-color: rgba(239, 68, 68, 0.4);">Reject</button>
+                                        <button type="submit" name="action" value="Approve" class="btn btn-primary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="return confirm('Are you sure you want to approve this payment?');">Approve</button>
+                                        <button type="submit" name="action" value="Reject" class="btn btn-outline" style="padding: 6px 12px; font-size: 0.8rem; color: #ef4444; border-color: rgba(239, 68, 68, 0.4);" onclick="return confirm('Are you sure you want to reject this payment?');">Reject</button>
                                     </form>
                                 </td>
                             </tr>

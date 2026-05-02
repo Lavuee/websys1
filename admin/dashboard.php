@@ -25,7 +25,7 @@ try {
 
     // 3. Retrieve the 5 most recent pending payments for verification
     $recentPayments = $pdo->query("
-        SELECT u.email as student_email, p.payment_method, p.amount, p.payment_date 
+        SELECT p.payment_id, p.enrollment_id, u.email as student_email, p.payment_method, p.amount, p.payment_date 
         FROM payments p
         JOIN enrollments e ON p.enrollment_id = e.enrollment_id
         JOIN students s ON e.student_id = s.student_id
@@ -113,18 +113,32 @@ include 'includes/admin_header.php';
                             <th>Method</th>
                             <th>Amount</th>
                             <th>Date</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (empty($recentPayments)): ?>
-                            <tr><td colspan="4" style="text-align: center; padding: 20px;">All payments have been processed.</td></tr>
+                            <tr><td colspan="5" style="text-align: center; padding: 20px;">All payments have been processed.</td></tr>
                         <?php else: ?>
                             <?php foreach ($recentPayments as $row): ?>
                                 <tr>
                                     <td style="font-weight: 500;"><?= htmlspecialchars($row['student_email']) ?></td>
-                                    <td><span class="badge badge-gcash"><?= htmlspecialchars($row['payment_method']) ?></span></td>
+                                    <td>
+                                        <span class="badge" style="<?= $row['payment_method'] === 'GCash' ? 'background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3);' : 'background: rgba(100, 116, 139, 0.15); color: #64748b; border: 1px solid rgba(100, 116, 139, 0.3);' ?>">
+                                            <?= htmlspecialchars($row['payment_method']) ?>
+                                        </span>
+                                    </td>
                                     <td style="font-weight: 700;">₱<?= number_format($row['amount'], 2) ?></td>
                                     <td><?= date('M d, Y', strtotime($row['payment_date'])) ?></td>
+                                    <td>
+                                        <form action="../actions/verify_payment.php" method="POST" style="display: flex; gap: 8px;">
+                                            <input type="hidden" name="payment_id" value="<?= $row['payment_id'] ?>">
+                                            <input type="hidden" name="enrollment_id" value="<?= $row['enrollment_id'] ?>">
+                                            <input type="hidden" name="return_to" value="dashboard.php">
+                                            <button type="submit" name="action" value="Approve" class="btn btn-primary" style="padding: 6px 12px; font-size: 0.8rem;">Approve</button>
+                                            <button type="submit" name="action" value="Reject" class="btn btn-outline" style="padding: 6px 12px; font-size: 0.8rem; color: #ef4444; border-color: rgba(239, 68, 68, 0.4);">Reject</button>
+                                        </form>
+                                    </td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>

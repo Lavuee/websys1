@@ -9,7 +9,7 @@ $statusFilter = $_GET['status'] ?? '';
 
 try {
     $query = "
-        SELECT e.enrollment_id, e.tracking_no, e.status, e.grade_level, e.total_assessment,
+        SELECT e.enrollment_id, e.tracking_no, e.status, e.grade_level, e.strand, e.total_assessment,
                s.*, 
                u.email as student_email 
         FROM enrollments e
@@ -169,31 +169,36 @@ include 'includes/registrar_header.php';
                 <select name="status" id="m_status" style="width:100%; padding:10px; margin:10px 0 25px; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-color); color:var(--text-main);">
                     <option value="Pending">Pending</option>
                     <option value="Assessed">Assessed</option>
-                    <option value="Enrolled">Enrolled</option>
-                    <option value="Rejected">Rejected</option>
                 </select>
                 
                 <label style="font-size:0.85rem; font-weight:600;">Total Tuition Assessment (₱)</label>
                 <input type="number" step="0.01" name="total_assessment" id="m_total" style="width:100%; padding:10px; margin:10px 0 25px; border-radius:8px; border:1px solid var(--glass-border); background:transparent; color:var(--text-main);">
                 
-                <div style="display:flex; justify-content:flex-end; gap:10px;">
-                    <button type="button" class="btn btn-outline" onclick="document.getElementById('statusModal').style.display='none'">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Change</button>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <button type="button" class="btn btn-outline" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.4);" onclick="confirmDelete()">Delete</button>
+                    <div style="display:flex; gap:10px;">
+                        <button type="button" class="btn btn-outline" onclick="document.getElementById('statusModal').style.display='none'">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Change</button>
+                    </div>
                 </div>
+            </form>
+            <form method="POST" action="../actions/delete_student.php" id="delete-form" style="display:none;">
+                <input type="hidden" name="enrollment_id" id="d_id">
+                <input type="hidden" name="return_to" value="student_records.php">
             </form>
         </div>
     </div>
 
     <!-- View Application Details Modal -->
     <div id="viewModal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:2000; justify-content:center; align-items:center;">
-        <div class="glass-panel" style="width:100%; max-width:600px; padding:30px; max-height: 90vh; overflow-y: auto;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="margin:0;">Student Details</h3>
-                <button class="btn btn-outline" style="border:none; padding:5px; font-size: 1.2rem; line-height: 1;" onclick="document.getElementById('viewModal').style.display='none'">&times;</button>
+        <div class="glass-panel" style="background: var(--bg-color); backdrop-filter: none; -webkit-backdrop-filter: none; width:100%; max-width:800px; padding:40px; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <h3 style="margin:0; font-size: 1.5rem;">Student Details</h3>
+                <button class="btn btn-outline" style="border:none; padding:5px; font-size: 1.5rem; line-height: 1;" onclick="document.getElementById('viewModal').style.display='none'">&times;</button>
             </div>
             
-            <h4 style="font-size: 0.95rem; margin-bottom: 10px; border-bottom: 1px solid var(--glass-border); padding-bottom: 5px;">Student Information</h4>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; font-size: 0.85rem; color: var(--text-main);">
+            <h4 style="font-size: 1.1rem; margin-bottom: 15px; border-bottom: 1px solid var(--glass-border); padding-bottom: 8px;">Student Information</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; font-size: 1rem; color: var(--text-main);">
                 <div><strong class="text-muted">Name:</strong> <span id="v_name"></span></div>
                 <div><strong class="text-muted">Email:</strong> <span id="v_email"></span></div>
                 <div><strong class="text-muted">LRN:</strong> <span id="v_lrn"></span></div>
@@ -203,14 +208,23 @@ include 'includes/registrar_header.php';
                 <div style="grid-column: span 2;"><strong class="text-muted">Address:</strong> <span id="v_address"></span></div>
             </div>
 
-            <h4 style="font-size: 0.95rem; margin-bottom: 10px; border-bottom: 1px solid var(--glass-border); padding-bottom: 5px;">Guardian Details</h4>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; font-size: 0.85rem; color: var(--text-main);">
+            <h4 style="font-size: 1.1rem; margin-bottom: 15px; border-bottom: 1px solid var(--glass-border); padding-bottom: 8px;">Academic Details</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; font-size: 1rem; color: var(--text-main);">
+                <div><strong class="text-muted">Tracking No:</strong> <span id="v_tracking"></span></div>
+                <div><strong class="text-muted">Incoming Grade:</strong> <span id="v_grade"></span></div>
+                <div><strong class="text-muted">Track / Strand:</strong> <span id="v_strand"></span></div>
+                <div><strong class="text-muted">Previous School:</strong> <span id="v_prev_school"></span></div>
+            </div>
+
+            <h4 style="font-size: 1.1rem; margin-bottom: 15px; border-bottom: 1px solid var(--glass-border); padding-bottom: 8px;">Guardian Details</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; font-size: 1rem; color: var(--text-main);">
                 <div><strong class="text-muted">Name:</strong> <span id="v_guardian_name"></span></div>
+                <div><strong class="text-muted">Relationship:</strong> <span id="v_guardian_rel"></span></div>
                 <div><strong class="text-muted">Contact:</strong> <span id="v_guardian_contact"></span></div>
             </div>
 
-            <h4 style="font-size: 0.95rem; margin-bottom: 10px; border-bottom: 1px solid var(--glass-border); padding-bottom: 5px;">Uploaded Documents</h4>
-            <div id="v_documents" style="font-size: 0.85rem; margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px;">
+            <h4 style="font-size: 1.1rem; margin-bottom: 15px; border-bottom: 1px solid var(--glass-border); padding-bottom: 8px;">Uploaded Documents</h4>
+            <div id="v_documents" style="font-size: 1rem; margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px;">
                 <!-- Document links will be injected here -->
             </div>
         </div>
@@ -220,9 +234,16 @@ include 'includes/registrar_header.php';
     <script>
         function openStatusModal(data) {
             document.getElementById('m_id').value = data.enrollment_id;
+            document.getElementById('d_id').value = data.enrollment_id;
             document.getElementById('m_status').value = data.status;
             document.getElementById('m_total').value = data.total_assessment;
             document.getElementById('statusModal').style.display = 'flex';
+        }
+
+        function confirmDelete() {
+            if (confirm("Are you sure you want to permanently delete this student record? This cannot be undone.")) {
+                document.getElementById('delete-form').submit();
+            }
         }
 
         function openViewModal(data) {
@@ -233,7 +254,14 @@ include 'includes/registrar_header.php';
             document.getElementById('v_gender').textContent = data.gender || 'N/A';
             document.getElementById('v_contact').textContent = data.contact_number || 'N/A';
             document.getElementById('v_address').textContent = data.address || 'N/A';
+
+            document.getElementById('v_tracking').textContent = data.tracking_no || 'N/A';
+            document.getElementById('v_grade').textContent = data.grade_level || 'N/A';
+            document.getElementById('v_strand').textContent = data.strand || 'N/A';
+            document.getElementById('v_prev_school').textContent = data.previous_school || 'N/A';
+
             document.getElementById('v_guardian_name').textContent = data.guardian_name || 'N/A';
+            document.getElementById('v_guardian_rel').textContent = data.guardian_relationship || 'N/A';
             document.getElementById('v_guardian_contact').textContent = data.guardian_contact || 'N/A';
 
             const docsContainer = document.getElementById('v_documents');
@@ -254,7 +282,7 @@ include 'includes/registrar_header.php';
                         const knownField = docFields.find(df => df.key === key);
                         const label = knownField ? knownField.label : key.replace(/_/g, ' ').toUpperCase();
                         const filePath = data[key].includes('/') ? data[key] : `../uploads/${data[key]}`;
-                        docsContainer.innerHTML += `<a href="${filePath}" target="_blank" class="text-primary" style="text-decoration: none; display: inline-block; background: rgba(59, 130, 246, 0.1); padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(59, 130, 246, 0.2);"><i class="bi bi-file-earmark-text"></i> View ${label}</a>`;
+                        docsContainer.innerHTML += `<a href="${filePath}" target="_blank" class="text-primary" style="text-decoration: none; display: inline-block; background: rgba(59, 130, 246, 0.1); padding: 10px 15px; font-size: 1rem; border-radius: 6px; border: 1px solid rgba(59, 130, 246, 0.2);"><i class="bi bi-file-earmark-text"></i> View ${label}</a>`;
                     }
                 }
             }

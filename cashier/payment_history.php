@@ -54,6 +54,7 @@ include 'includes/cashier_header.php';
                             <th>Amount</th>
                             <th>Status</th>
                             <th>Date Processed</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -75,12 +76,20 @@ include 'includes/cashier_header.php';
                                     </span>
                                 </td>
                                 <td><?= date('m/d/Y h:i A', strtotime($row['payment_date'])) ?></td>
+                                <td>
+                                    <form action="../actions/verify_payment.php" method="POST" style="margin: 0;" onsubmit="return confirm('Are you sure you want to revert this payment to Pending?');">
+                                        <input type="hidden" name="payment_id" value="<?= $row['payment_id'] ?>">
+                                        <input type="hidden" name="enrollment_id" value="<?= $row['enrollment_id'] ?>">
+                                        <input type="hidden" name="return_to" value="payment_history.php">
+                                        <button type="submit" name="action" value="Revert" class="btn btn-outline" style="padding: 5px 10px; font-size: 0.8rem; color: #f59e0b; border-color: rgba(245, 158, 11, 0.4);"><i class="bi bi-arrow-counterclockwise"></i> Revert</button>
+                                    </form>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                         
                         <?php if (empty($payments)): ?>
                             <tr>
-                                <td colspan="5" style="text-align: center; padding: 30px; color: var(--text-muted);">
+                                <td colspan="6" style="text-align: center; padding: 30px; color: var(--text-muted);">
                                     No processed payments found.
                                 </td>
                             </tr>

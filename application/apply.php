@@ -54,7 +54,7 @@
     <div style="max-width: 800px; width: 100%;">
         
         <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 30px;">
-            <a href="index.php" class="btn btn-outline" style="padding: 8px 16px;">&larr; Home</a>
+            <a href="../index.php" class="btn btn-outline" style="padding: 8px 16px;">&larr; Home</a>
             <div>
                 <h2 style="font-size: 1.8rem; margin-bottom: 5px; color: var(--text-main);">Enrollment Application</h2>
                 <p class="text-muted" style="font-size: 0.95rem; margin: 0;">School Year <?= date('Y') ?>-<?= date('Y') + 1 ?></p>
